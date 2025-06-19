@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://gc1s88ksugkb"]
+
+[ext_resource type="Script" uid="uid://cbjdgydkn0585" path="res://Scripts/chess_board_renderer.gd" id="1_2i81o"]
+
+[node name="ChessBoardRenderer" type="Node2D"]
+script = ExtResource("1_2i81o")
+motion = null
+light = Color(0.592157, 0.733333, 0.843137, 1)
+dark = Color(0.247059, 0.447059, 0.278431, 1)
