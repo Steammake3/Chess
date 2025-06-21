@@ -49,9 +49,9 @@ static func fen_loader(fen):
 	for t in board: f.append_array(t)
 	return f
 	
-func get_index_of_mouse(pos, ts):
-	var mx = int(floor(pos.x/ts+4))
-	var my = int(floor(-pos.y/ts+4))
-	if mx in range(8) and my in range(8):
-		return my*8+mx
-	return -1
+static func color_of_piece(peice):
+	if peice == 0: #No peice
+		return -1
+	if (peice >> 3) & 1: #Black Peice
+		return 1
+	return 0 #White peice

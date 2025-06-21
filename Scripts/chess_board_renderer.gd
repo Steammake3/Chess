@@ -1,8 +1,8 @@
 @tool
 extends Node2D
 
-@export var tile_size = 30;
-@export var motion = 0.829;
+@export var tile_size := 30;
+@export var motion := 0.829;
 @export_color_no_alpha var light = Color.WHITE
 @export_color_no_alpha var dark = Color.DARK_GREEN
 
@@ -54,28 +54,31 @@ const texture_mapping = {
 }
 
 var state_of_game
+var turn = 0
+
+var selsq := -1
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	state_of_game = Board.fen_loader("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
 
 func _draw() -> void:
-	draw_board()
-	draw_pieces(Board.fen_loader($"../LineEdit".text))
-	var mx = int(floor(get_global_mouse_position().x/tile_size))
-	var my = int(floor(-get_global_mouse_position().y/tile_size))
-	if mx in range(-4,4) and my in range(-4,4):
-		draw_chess_sq(mx, my, tile_size, 0, Color(1, 0, 0, 0.4))
 	var posi = get_index_of_mouse(get_global_mouse_position())
+	var to_draw = state_of_game.duplicate()
+	draw_board()
+	draw_pieces(to_draw)
+	if (posi+1): draw_chess_sq(posi%8-4, int(posi/8)-4, tile_size, 0, Color(1, 0, 0, 0.4))
+	if (selsq+1): draw_chess_sq(selsq%8-4, int(selsq/8)-4, tile_size, 0, Color(1, 0.6, 0, 0.4))
 	var z = str(posi) if posi>=0 else "Nope"
 	draw_string(PressStart2P, Vector2(-900, 350), z, 0, -1, 60, Color.ORANGE)
+	draw_multiline_string(PressStart2P, Vector2(650, 0), (" Black" if turn else " White") + "\nto play", 1, -1, 60, 2, Color.WEB_PURPLE)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
 	queue_redraw()
 
 func draw_board():
-	var debug = ["a", "b", "c", "d", "e", "f", "g", "h"]
+	var _debug = ["a", "b", "c", "d", "e", "f", "g", "h"]
 	var offset = 4 * tile_size
 	for i in range(8):
 		for j in range(8):
@@ -97,11 +100,23 @@ func playmove(start,end, isenpassant, game_board):
 	if not isenpassant:
 		game_board[end] = game_board[start]
 		game_board[start] = Pieces.None
+	turn = 1 - turn
 
 func _input(event):
 	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			var clickpos = event.position
+			if event.button_index == MOUSE_BUTTON_LEFT and event.is_pressed():
+				var pos = get_index_of_mouse(get_global_mouse_position())
+				if selsq == -1:
+					if Board.color_of_piece(state_of_game[pos]) == turn:
+						selsq = pos
+				elif pos==-1:
+					selsq = -1
+				elif pos==selsq:
+					selsq = -1
+				elif selsq != pos:
+					if Board.color_of_piece(state_of_game[selsq]) == turn and Board.color_of_piece(state_of_game[pos]) != turn:
+						playmove(selsq, pos, false, state_of_game)
+						selsq = -1
 
 func get_index_of_mouse(pos):
 	var mx = int(floor(pos.x/tile_size+4))
