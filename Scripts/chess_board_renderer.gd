@@ -55,20 +55,23 @@ const texture_mapping = {
 
 var state_of_game
 var turn = 0
+var all_pieces : PackedByteArray = []
 
 var selsq := -1
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	state_of_game = Board.fen_loader("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR")
+	for i in range(64):
+		if state_of_game[i] != Pieces.None: all_pieces.append(i)
 
 func _draw() -> void:
 	var posi = get_index_of_mouse(get_global_mouse_position())
 	var to_draw = state_of_game.duplicate()
 	draw_board()
 	draw_pieces(to_draw)
-	if (posi+1): draw_chess_sq(posi%8-4, int(posi/8)-4, tile_size, 0, Color(1, 0, 0, 0.4))
-	if (selsq+1): draw_chess_sq(selsq%8-4, int(selsq/8)-4, tile_size, 0, Color(1, 0.6, 0, 0.4))
+	if (posi+1): draw_chess_sq(Board.index2vec(posi).x, Board.index2vec(posi).y, tile_size, 0, Color(1, 0, 0, 0.4))
+	if (selsq+1): draw_chess_sq(Board.index2vec(selsq).x, Board.index2vec(selsq).y, tile_size, 0, Color(1, 0.6, 0, 0.4))
 	var z = str(posi) if posi>=0 else "Nope"
 	draw_string(PressStart2P, Vector2(-900, 350), z, 0, -1, 60, Color.ORANGE)
 	draw_multiline_string(PressStart2P, Vector2(650, 0), (" Black" if turn else " White") + "\nto play", 1, -1, 60, 2, Color.WEB_PURPLE)
@@ -117,6 +120,8 @@ func _input(event):
 					if Board.color_of_piece(state_of_game[selsq]) == turn and Board.color_of_piece(state_of_game[pos]) != turn:
 						playmove(selsq, pos, false, state_of_game)
 						selsq = -1
+					elif Board.color_of_piece(state_of_game[pos]) == turn:
+						selsq = pos
 
 func get_index_of_mouse(pos):
 	var mx = int(floor(pos.x/tile_size+4))

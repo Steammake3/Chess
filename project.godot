@@ -13,6 +13,8 @@ config_version=5
 config/name="Chess"
 run/main_scene="uid://cciwuqe8i1v02"
 config/features=PackedStringArray("4.4", "GL Compatibility")
+boot_splash/bg_color=Color(0.294598, 0.288776, 0.525141, 1)
+boot_splash/image="uid://cowhwhckwdkjf"
 config/icon="res://icon.svg"
 
 [display]

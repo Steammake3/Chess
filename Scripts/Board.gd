@@ -55,3 +55,11 @@ static func color_of_piece(peice):
 	if (peice >> 3) & 1: #Black Peice
 		return 1
 	return 0 #White peice
+
+static func type_of_piece(piece):
+	if piece == 0: #No peice
+		return piece
+	return piece & 7
+
+static func index2vec(index):
+	return Vector2(index%8-4, int(index/8)-4)
