@@ -44,7 +44,7 @@ func _init(fen : String):
 	for i in range(64):
 		if board[i] != Pieces.None: pindeces.append(i)
 
-func playmove(start,end, isenpassant):
+func playmove(start, end, isenpassant):
 	if not isenpassant:
 		if end not in pindeces: pindeces.append(end)
 		board[end] = board[start]
@@ -54,9 +54,9 @@ func playmove(start,end, isenpassant):
 
 func dupe():
 	var new1 : GameState = GameState.new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-	new1.board = self.board
+	new1.board = self.board.duplicate()
 	new1.turn = self.turn
-	new1.pindeces = self.pindeces
+	new1.pindeces = self.pindeces.duplicate()
 	new1.enpassant_index = self.enpassant_index
 	new1.cancastle = self.cancastle
 	return new1

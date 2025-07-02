@@ -1,10 +1,11 @@
 @tool
 extends Node2D
 
-@export var tile_size := 30;
-@export var motion := 0.829;
-@export_color_no_alpha var light = Color.WHITE
-@export_color_no_alpha var dark = Color.DARK_GREEN
+@export var tile_size := 140;
+@export var motion := 0.854;
+@export var speed : int = 1.5;
+@export_color_no_alpha var light = Color("97bbd7")
+@export_color_no_alpha var dark = Color("3f7247")
 
 const WK = preload("res://Pieces/white/king.png")
 const WQ = preload("res://Pieces/white/queen.png")
@@ -24,37 +25,37 @@ const PressStart2P = preload("res://PressStart2P-Regular.ttf")
 
 enum Pieces {
 	None = 0,
-	WKing = 1,
-	WQueen = 2,
-	WBishop = 3,
-	WRook = 4,
-	WKnight = 5,
-	WPawn = 6,
-	BKing = 9,
-	BQueen = 10,
-	BBishop = 11,
-	BRook = 12,
-	BKnight = 13,
-	BPawn = 14
+	King = 1,
+	Queen = 2,
+	Bishop = 3,
+	Rook = 4,
+	Knight = 5,
+	Pawn = 6,
+	
+	White = 8,
+	Black = 16
 }
 
 const texture_mapping = {
-	Pieces.WKing : WK,
-	Pieces.WQueen : WQ,
-	Pieces.WBishop : WB,
-	Pieces.WKnight : WN,
-	Pieces.WRook : WR,
-	Pieces.WPawn : WP, #Now the black pieces
-	Pieces.BKing : BK,
-	Pieces.BQueen : BQ,
-	Pieces.BBishop : BB,
-	Pieces.BKnight : BN,
-	Pieces.BRook : BR,
-	Pieces.BPawn : BP
+	9 : WK,
+	10 : WQ,
+	11 : WB,
+	12 : WR,
+	13 : WN,
+	14 : WP, #Now the black pieces
+	17 : BK,
+	18 : BQ,
+	19 : BB,
+	20 : BR,
+	21 : BN,
+	22 : BP
 }
 
 var game : GameState
 var selsq : int = -1
+var moving : float = -1
+var current_move := [-1, -1, false]
+var moving_piece : int = Pieces.Pawn | Pieces.Black
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -62,20 +63,36 @@ func _ready() -> void:
 
 func _draw() -> void:
 	var posi = get_index_of_mouse(get_global_mouse_position())
-	var to_draw = game.board
+	var to_draw : PackedByteArray = game.dupe().board
+	if moving > -1:
+		moving_piece = game.board[current_move[0]]
+		to_draw[current_move[0]] = Pieces.None
+		if moving >= 0.9:
+			to_draw[current_move[1]] = Pieces.None
+	
 	draw_board()
-	draw_pieces(to_draw)
+	
 	if (posi+1): draw_chess_sq(Board.index2vec(posi).x, Board.index2vec(posi).y, tile_size, 0, Color(1, 0, 0, 0.4))
 	if (selsq+1): draw_chess_sq(Board.index2vec(selsq).x, Board.index2vec(selsq).y, tile_size, 0, Color(1, 0.6, 0, 0.4))
-	var z = str(posi) if posi>=0 else "Nope"
+	
+	var z = Board.index2pgn(posi) if posi>=0 else "Nope"
 	draw_string(PressStart2P, Vector2(-900, 350), z, 0, -1, 60, Color.ORANGE)
 	draw_multiline_string(PressStart2P, Vector2(650, 0), (" Black" if game.turn else " White") + "\nto play", 1, -1, 60, 2, Color.WEB_PURPLE)
 	
 	for i in game.pindeces:
 		draw_chess_sq(Board.index2vec(i).x, Board.index2vec(i).y, tile_size, 0, Color(0.5, 0, 0.2, 0.4))
-
+		
+	draw_pieces(to_draw)
+	if moving >= 1:
+		moving = -1
+		game.playmove(current_move[0], current_move[1], current_move[2])
+	elif moving > -1:
+		var p = lerp(Board.index2vec(current_move[0]), Board.index2vec(current_move[1]), Board.Easy(moving))
+		draw_texture_rect(texture_mapping[moving_piece], Rect2(Vector2(p.x*tile_size, -(p.y+1)*tile_size), Vector2(tile_size, tile_size)*Board.Ease_size(moving)), false)
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
+	moving += delta*speed
+	if moving < 0: moving = -1
 	queue_redraw()
 
 func draw_board():
@@ -92,7 +109,8 @@ func draw_pieces(pieces):
 	for i in range(8):
 		for j in range(8):
 			if pieces[8*j+i] == Pieces.None: continue
-			draw_texture_rect(texture_mapping[pieces[8*j+i]], Rect2(Vector2(i*tile_size-offset, -(j+1)*tile_size+offset), Vector2(tile_size, tile_size)), false)
+			if pieces[8*j+i] in texture_mapping.keys():
+				draw_texture_rect(texture_mapping[pieces[8*j+i]], Rect2(Vector2(i*tile_size-offset, -(j+1)*tile_size+offset), Vector2(tile_size, tile_size)), false)
 
 func draw_chess_sq(x,y,sz,offset,col):
 	draw_rect(Rect2(Vector2(x*sz-offset, -y*sz+offset), Vector2(sz, -sz)), col)
@@ -110,7 +128,9 @@ func _input(event):
 					selsq = -1
 				elif selsq != pos:
 					if Board.color_of_piece(game.board[selsq]) == game.turn and Board.color_of_piece(game.board[pos]) != game.turn:
-						game.playmove(selsq, pos, false)
+						current_move = [selsq, pos, false]
+						moving = 0.01
+						#game.playmove(selsq, pos, false)
 						selsq = -1
 					elif Board.color_of_piece(game.board[pos]) == game.turn:
 						selsq = pos

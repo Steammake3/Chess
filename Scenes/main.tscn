@@ -8,8 +8,7 @@
 zoom = Vector2(0.5, 0.5)
 
 [node name="ChessBoardRenderer" parent="." instance=ExtResource("1_8gbba")]
-tile_size = 140
-motion = 0.854
+speed = 1.5
 light = Color(0.591126, 0.73482, 0.844753, 1)
 dark = Color(0.247826, 0.448369, 0.27989, 1)
 
