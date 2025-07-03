@@ -28,22 +28,19 @@ const fen_key = {
 	"p" : (Pieces.Black | Pieces.Pawn)
 }
 
-const dists : PackedInt32Array = [0x1c0fc0, 0x380f81, 0x540f42, 0x700f03,
-0x8c0ec4, 0xa80e85, 0xc40e46, 0xe00e07,
-0x188dc8, 0x389d89, 0x549d4a, 0x709d0b,
-0x8c9ccc, 0xa89c8d, 0xc49c4e, 0xc01c0f,
-0x150bd0, 0x351b91, 0x552b52, 0x712b13,
-0x8d2ad4, 0xa92a95, 0xa4aa56, 0xa02a17,
-0x1189d8, 0x319999, 0x51a95a, 0x71b91b,
-0x8db8dc, 0x89389d, 0x84b85e, 0x80381f,
-0xe07e0, 0x2e17a1, 0x4e2762, 0x6e3723,
-0x6dc6e4, 0x6946a5, 0x64c666, 0x604627,
-0xa85e8, 0x2a95a9, 0x4aa56a, 0x4a352b,
-0x49c4ec, 0x4954ad, 0x44d46e, 0x40542f,
-0x703f0, 0x2713b1, 0x26a372, 0x263333,
-0x25c2f4, 0x2552b5, 0x24e276, 0x206237,
-0x381f8, 0x311b9, 0x2a17a, 0x2313b,
-0x1c0fc, 0x150bd, 0xe07e, 0x703f]
+const directions = [7, 9, -7, -9, 8, 1, -8, -1]
+
+static func calc_dists():
+	var retval : Array = []
+	for y in range(8):
+		for x in range(8):
+			var cds = []
+			var dNESW = [7-y, 7-x, y, x]
+			for i in range(4):
+				cds.append(min(dNESW[i], dNESW[i-1]))
+			cds.append_array(dNESW)
+			retval.append(cds)
+	return retval
 
 static func fen_loader(fen):
 	var board = Array()
@@ -78,22 +75,31 @@ static func index2pgn(index):
 	return "abcdefgh"[index%8] + str(index/8+1)
 
 static func legal_sliding(game : GameState, index):
-	const slide_vecs = [1,-8, -1, 8, 9, -7, -9, 7]
 	var possibilities = []
 	var legals = []
-	if type_of_piece(game.board[index]) == Pieces.Rook:
-		possibilities = slide_vecs.slice(0, 4) 
-	elif type_of_piece(game.board[index]) == Pieces.Bishop:
-		possibilities = slide_vecs.slice(4, 8)
+	if type_of_piece(game.board[index]) == Pieces.Bishop:
+		possibilities = [7, 9, -7, -9]
+	elif type_of_piece(game.board[index]) == Pieces.Rook:
+		possibilities = [8, 1, -8, -1]
 	elif type_of_piece(game.board[index]) == Pieces.Queen:
-		possibilities = slide_vecs.duplicate()
+		possibilities = directions.duplicate()
+	else: return legals
 	
-	for i in possibilities:
-		for extent in range(9):
-			pass
+	var distos = calc_dists()
+	
+	for dir in range(len(possibilities)):
+		for extent in range(distos[index][directions.find(possibilities[dir])]):
+			var target = index + possibilities[dir] * (extent+1)
+			if target in game.pindeces:
+				if Board.color_of_piece(game.board[target]) != game.turn:
+					legals.append(target)
+				break
+			legals.append(target)
+	
+	return legals
 
 static func Easy(x):
 	return -(cos(PI * x) - 1) / 2
 
 static func Ease_size(x):
-	return -pow(x-0.5, 4) + 1.0625
+	return -pow(x-0.5, 4)*1.2 + 1.0625

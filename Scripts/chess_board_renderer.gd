@@ -20,6 +20,7 @@ const BB = preload("res://Pieces/black/bishop.png")
 const BN = preload("res://Pieces/black/knight.png")
 const BR = preload("res://Pieces/black/rook.png")
 const BP = preload("res://Pieces/black/pawn.png")
+const legal = preload("res://Pieces/legal.png")
 
 const PressStart2P = preload("res://PressStart2P-Regular.ttf")
 
@@ -60,6 +61,7 @@ var moving_piece : int = Pieces.Pawn | Pieces.Black
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	game = GameState.new("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+	#game = GameState.new("5R1k/4B3/8/8/1q6/8/7K/8 w - - 0 1")
 
 func _draw() -> void:
 	var posi = get_index_of_mouse(get_global_mouse_position())
@@ -81,8 +83,14 @@ func _draw() -> void:
 	
 	for i in game.pindeces:
 		draw_chess_sq(Board.index2vec(i).x, Board.index2vec(i).y, tile_size, 0, Color(0.5, 0, 0.2, 0.4))
-		
+	
+	if selsq != -1:
+		for move in Board.legal_sliding(game, selsq): 
+			var p = Board.index2vec(move)
+			draw_chess_sq(p.x,p.y,tile_size,0,Color(0, 0.9, 0, 0.7))
+	
 	draw_pieces(to_draw)
+	
 	if moving >= 1:
 		moving = -1
 		game.playmove(current_move[0], current_move[1], current_move[2])
